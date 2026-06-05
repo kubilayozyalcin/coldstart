@@ -1,0 +1,77 @@
+[
+  {
+    "id": "doc-001",
+    "content": "Çevik (Agile) yazılım geliştirme, müşteri geri bildirimine dayalı iteratif teslimatları esas alır. Scrum, Kanban ve XP en yaygın çatılardır. Sprint'ler genellikle iki haftalıktır ve sprint sonunda çalışan bir artım teslim edilir.",
+    "metadata": { "category": "agile", "source": "manuel" }
+  },
+  {
+    "id": "doc-002",
+    "content": "Kod incelemesi (code review), hataları erken yakalamanın ve bilgi paylaşımının en etkili yollarından biridir. İyi bir kod incelemesi yorucu olmamalı; küçük parçalar, açık geri bildirim ve takım kurallarına bağlılık temeldir.",
+    "metadata": { "category": "engineering", "source": "manuel" }
+  },
+  {
+    "id": "doc-003",
+    "content": "Sürekli entegrasyon (CI) her commit'te otomatik derleme ve test koşumunu sağlar. Sürekli teslimat (CD) ise bu artımların production'a otomatik dağıtılmasını içerir. CI/CD hattının olmadığı bir projede teslim hızı ve kalite öngörülemez.",
+    "metadata": { "category": "devops", "source": "manuel" }
+  },
+  {
+    "id": "doc-004",
+    "content": "Birim testleri, en küçük kod biriminin beklenen şekilde davrandığını doğrular. xUnit, NUnit ve MSTest .NET dünyasında yaygın test kütüphaneleridir. Test kapsamı yüksek bir projede regresyon korkusu azalır, refactoring güvenli hale gelir.",
+    "metadata": { "category": "testing", "source": "manuel" }
+  },
+  {
+    "id": "doc-005",
+    "content": "Mimari kararları belgelemek için ADR (Architecture Decision Record) yaklaşımı önerilir. Her ADR; bağlam, alınan karar, alternatifler ve sonuçlar bölümlerinden oluşur. ADR'ler proje yaşam döngüsü boyunca takip edilir ve gerektiğinde yenisiyle değiştirilir.",
+    "metadata": { "category": "architecture", "source": "manuel" }
+  },
+  {
+    "id": "doc-006",
+    "content": "Mikroservis mimarisi, uygulamayı bağımsız dağıtılabilen küçük servislere böler. Her servisin kendi veri tabanı vardır; servisler arası iletişim genellikle HTTP veya mesaj kuyrukları üzerinden olur. Operasyonel karmaşıklık monolitten daha yüksektir.",
+    "metadata": { "category": "architecture", "source": "manuel" }
+  },
+  {
+    "id": "doc-007",
+    "content": "Domain Driven Design (DDD), karmaşık iş alanlarını modellemek için stratejik ve taktik araçlar sunar. Bounded context, aggregate, entity, value object DDD'nin temel kavramlarıdır. Doğru uygulandığında iş ile yazılım arasındaki çeviri kaybı azalır.",
+    "metadata": { "category": "ddd", "source": "manuel" }
+  },
+  {
+    "id": "doc-008",
+    "content": "Git, dağıtık sürüm kontrol sistemidir. Branch'ler hafiftir; feature branch + pull request iş akışı, takım çalışmasında standardı belirler. Trunk-based development ise sürekli teslimatı önceleyen alternatif bir yaklaşımdır.",
+    "metadata": { "category": "vcs", "source": "manuel" }
+  },
+  {
+    "id": "doc-009",
+    "content": "Teknik borç (technical debt), kısa vadeli kazanç için bilinçli ya da bilinçsiz alınan kalite ödünüdür. Bordro gibi düzenli ödenmezse faiziyle birlikte birikir. Refactoring sprint kapasitesinin bir parçası olarak takvimlenmelidir.",
+    "metadata": { "category": "engineering", "source": "manuel" }
+  },
+  {
+    "id": "doc-010",
+    "content": "Observability üç temel sinyale dayanır: log, metrik ve trace. .NET 8 ekosisteminde OpenTelemetry standart hâline gelmiştir. Production sorunlarının kök neden analizinde bu üç sinyal birlikte sorgulanır.",
+    "metadata": { "category": "observability", "source": "manuel" }
+  },
+  {
+    "id": "doc-011",
+    "content": "Veri tabanı migrasyonlarını sürüm kontrolüne almak, hem geliştirme hem deployment güvenliği için kritiktir. Entity Framework Core'da migration komutlarıyla şema değişiklikleri otomatik üretilir; üretim öncesi mutlaka gözden geçirilmelidir.",
+    "metadata": { "category": "data", "source": "manuel" }
+  },
+  {
+    "id": "doc-012",
+    "content": "Bağımlılık enjeksiyonu (DI), nesneler arası bağı gevşetir ve test edilebilirliği artırır. ASP.NET Core'da yerleşik DI container varsayılan olarak kullanılır. Servis ömrü (Singleton, Scoped, Transient) doğru seçilmezse hatalı durum paylaşımı ortaya çıkar.",
+    "metadata": { "category": "dotnet", "source": "manuel" }
+  },
+  {
+    "id": "doc-013",
+    "content": "Pull request'lerin küçük tutulması; inceleme süresini, çatışma riskini ve hata oranını düşürür. 400 satırı aşan PR'ler genellikle parçalanmalıdır. PR şablonu kullanmak, açıklama kalitesini standartlaştırır.",
+    "metadata": { "category": "process", "source": "manuel" }
+  },
+  {
+    "id": "doc-014",
+    "content": "Sıfır-güven (zero trust) güvenlik modeli, ağ konumuna bakılmaksızın her isteğin doğrulanmasını gerektirir. JWT'nin doğru imzalanması, anahtar rotasyonu ve scope yönetimi kurumsal API'lerin temelidir. Secret'lar asla kaynak kodda tutulmaz.",
+    "metadata": { "category": "security", "source": "manuel" }
+  },
+  {
+    "id": "doc-015",
+    "content": "Retrieval-Augmented Generation (RAG), LLM cevaplarını dış bilgi tabanından getirilen belgelerle zenginleştirir. Klasik RAG hattı; chunking, embedding, vektörel arama ve completion adımlarından oluşur. Cold start probleminde vektör veri tabanı boş olduğu için bu hat çalışmaz.",
+    "metadata": { "category": "rag", "source": "manuel" }
+  }
+]

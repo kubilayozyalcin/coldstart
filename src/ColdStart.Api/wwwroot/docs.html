@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ColdStart Dokümantasyon</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --layer1: #f59e0b;
+            --layer2: #10b981;
+            --layer3: #8b5cf6;
+            --code-bg: #f1f5f9;
+            --highlight: #fef3c7;
+            --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 4px 12px rgba(15, 23, 42, .04);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 14.5px;
+            line-height: 1.65;
+        }
+
+        code, pre, .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+        code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 22px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+        header h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
+        header .subtitle { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+        header .nav a { color: var(--primary); text-decoration: none; margin-left: 16px; font-size: 13px; }
+        header .nav a:hover { text-decoration: underline; }
+
+        main {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        article > section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 28px 32px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        article h2 {
+            margin: 0 0 12px;
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: -.005em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        article h2 .num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        article h3 { margin: 20px 0 8px; font-size: 15px; font-weight: 600; }
+        article p { margin: 0 0 10px; }
+
+        .tldr {
+            background: linear-gradient(180deg, rgba(37, 99, 235, .06), rgba(37, 99, 235, .02));
+            border: 1px solid rgba(37, 99, 235, .25);
+        }
+        .tldr h2 { color: var(--primary); }
+        .tldr p { font-size: 15.5px; line-height: 1.7; }
+
+        .term {
+            border-bottom: 1px dotted var(--muted);
+            cursor: help;
+        }
+        .term-def { color: var(--muted); font-size: 12.5px; font-style: italic; }
+
+        /* Akış ve mimari diyagramları */
+        .diagram {
+            background: var(--code-bg);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 16px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .node {
+            padding: 12px 18px;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            min-width: 180px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .05);
+        }
+        .node strong { display: block; font-weight: 600; font-size: 13.5px; }
+        .node small { color: var(--muted); font-size: 11.5px; }
+        .node.user { background: #fff7ed; border-color: #fdba74; }
+        .node.api { background: #eff6ff; border-color: #93c5fd; }
+        .node.service { background: #f0f9ff; border-color: #bae6fd; }
+        .node.l1 { background: rgba(245, 158, 11, .14); border-color: var(--layer1); }
+        .node.l2 { background: rgba(16, 185, 129, .14); border-color: var(--layer2); }
+        .node.l3 { background: rgba(139, 92, 246, .14); border-color: var(--layer3); }
+        .node.store { background: #faf5ff; border-color: #d8b4fe; }
+
+        .arrow {
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1;
+        }
+        .arrow.label {
+            font-size: 11.5px;
+            font-style: italic;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .branch {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            width: 100%;
+        }
+        .branch-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .branch-label {
+            font-size: 11.5px;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .arch {
+            display: flex;
+            flex-direction: column;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--surface);
+            margin: 16px 0;
+        }
+        .arch-row {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 16px;
+            align-items: center;
+        }
+        .arch-row:last-child { border-bottom: none; }
+        .arch-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+        }
+        .arch-contents { display: flex; gap: 8px; flex-wrap: wrap; }
+        .arch-chip {
+            padding: 4px 10px;
+            background: var(--code-bg);
+            border-radius: 999px;
+            font-size: 12px;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        table.endpoints {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+        table.endpoints th, table.endpoints td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        table.endpoints th {
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        table.endpoints code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .method { display: inline-block; min-width: 50px; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: "JetBrains Mono", monospace; text-align: center; }
+        .method.get { background: rgba(37, 99, 235, .12); color: var(--primary); }
+        .method.post { background: rgba(16, 185, 129, .14); color: #047857; }
+        .method.delete { background: rgba(220, 38, 38, .12); color: #b91c1c; }
+
+        ol.steps { padding-left: 0; list-style: none; counter-reset: step; }
+        ol.steps li {
+            counter-increment: step;
+            position: relative;
+            padding: 14px 14px 14px 56px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: var(--surface);
+        }
+        ol.steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 16px;
+            top: 14px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        ol.steps li strong { display: block; margin-bottom: 4px; }
+        ol.steps li .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+        dl.glossary { margin: 0; }
+        dl.glossary dt {
+            font-weight: 600;
+            margin-top: 14px;
+            color: var(--text);
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        dl.glossary dt .en { color: var(--muted); font-weight: 400; font-style: italic; font-size: 13px; }
+        dl.glossary dd { margin: 4px 0 0 0; color: #334155; }
+
+        .callout {
+            padding: 14px 16px;
+            background: rgba(245, 158, 11, .08);
+            border-left: 3px solid var(--layer1);
+            border-radius: 4px;
+            margin: 14px 0;
+            font-size: 13px;
+        }
+        .callout.info {
+            background: rgba(37, 99, 235, .06);
+            border-left-color: var(--primary);
+        }
+
+        table.results {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+        table.results th, table.results td {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        table.results th {
+            font-size: 11.5px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        table.results td.num { font-family: "JetBrains Mono", monospace; font-size: 12px; }
+
+        footer {
+            padding: 22px 32px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 11.5px;
+            text-align: center;
+            background: var(--surface);
+        }
+        footer a { color: var(--primary); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>ColdStart Dokümantasyon</h1>
+        <p class="subtitle">Adaptif Hibrit RAG · Bitirme Projesi</p>
+    </div>
+    <nav class="nav">
+        <a href="/">← Demo</a>
+        <a href="/tests.html">Test Senaryoları</a>
+        <a href="/swagger" target="_blank">Swagger</a>
+    </nav>
+</header>
+
+<main>
+<article>
+
+    <!-- 1. TLDR -->
+    <section class="tldr">
+        <h2><span class="num">1</span>Proje Tek Cümleyle</h2>
+        <p>
+            Bu projede, bilgi tabanı <strong>boşken</strong> ya da <strong>çok az belge</strong> varken bile
+            cevap verebilen bir <span class="term">soru cevap motoru<small class="term-def"> (kullanıcının doğal dildeki sorusuna, sistemde kayıtlı belgeleri kullanarak metin yanıt veren bir yazılım)</small></span> geliştirdim.
+            Klasik RAG sistemleri ilk kurulduğunda elinde veri olmadığı için cevap üretemez. Bu duruma
+            <strong>cold start</strong> problemi deniyor. ColdStart bu problemi
+            <strong>üç katmanlı ve otomatik geçişli</strong> bir yapıyla çözüyor: az veride klasik arama,
+            orta seviyede anlamsal arama, yeterli veride tam RAG.
+        </p>
+    </section>
+
+    <!-- 2. Problem -->
+    <section>
+        <h2><span class="num">2</span>Problem Nedir? Cold Start</h2>
+        <p>
+            <span class="term">RAG <small class="term-def">(Retrieval-Augmented Generation: bir dil modelinin cevap üretmeden önce dış bir bilgi tabanından ilgili belgeleri çekmesi tekniği)</small></span>
+            sistemlerinin çalışması için iki şey gerekiyor: bir <strong>bilgi tabanı</strong>, yani belgeler,
+            ve bu belgelerin sayısal temsilleri olan
+            <span class="term">embedding<small class="term-def"> (bir metnin anlamını yakalayan sayı dizisi, vektör)</small></span>'ler.
+        </p>
+        <p>
+            Sistem ilk kurulduğunda bilgi tabanı boş. Embedding de üretilmemiş. Bu durumda klasik bir RAG sistemi ne yapar?
+        </p>
+        <div class="diagram">
+            <div class="node user"><strong>Kullanıcı sorusu</strong></div>
+            <div class="arrow">↓</div>
+            <div class="node api"><strong>Klasik RAG sistemi</strong></div>
+            <div class="arrow">↓</div>
+            <div class="node" style="background:#fee2e2;border-color:#fca5a5;">
+                <strong>Boş bilgi tabanı</strong>
+                <small>Anlam araması yapamaz, cevap üretemez</small>
+            </div>
+        </div>
+        <p>
+            Literatürü taradığımda gördüm ki temel RAG çalışmaları (Lewis 2020, Gao 2024) hep
+            "elimizde yeterli veri var" varsayımıyla ilerliyor. Veri azken ne olacağı sorusu sistematik
+            olarak ele alınmamış. Benim katkım şu: <strong>veri azken bile çalışan ve veri arttıkça
+            stratejisini kendisi değiştiren bir arama hattı</strong> kurmak.
+        </p>
+    </section>
+
+    <!-- 3. Çözüm -->
+    <section>
+        <h2><span class="num">3</span>Çözüm: 3 Katmanlı Adaptif Pipeline</h2>
+        <p>
+            Sistem her istekte kayıtlı belge sayısına bakıyor ve hangi stratejiyi kullanacağına
+            <strong>çalışma anında</strong> karar veriyor. Üç katman tanımladım, her biri farklı bir
+            yaklaşımla arama yapıyor.
+        </p>
+
+        <div class="diagram">
+            <div class="node api"><strong>Soru veya belge ekleme</strong></div>
+            <div class="arrow">↓</div>
+            <div class="node service"><strong>PipelineRouter</strong><small>documentCount (belge sayısı) okur</small></div>
+            <div class="arrow">↓</div>
+            <div class="branch">
+                <div class="branch-col">
+                    <div class="branch-label">documentCount &lt; 5</div>
+                    <div class="arrow">↓</div>
+                    <div class="node l1">
+                        <strong>Layer 1: Keyword</strong>
+                        <small>BM25 algoritması<br/>LLM yok · deterministik</small>
+                    </div>
+                </div>
+                <div class="branch-col">
+                    <div class="branch-label">5 ≤ documentCount &lt; 20</div>
+                    <div class="arrow">↓</div>
+                    <div class="node l2">
+                        <strong>Layer 2: Embedding</strong>
+                        <small>OpenAI embedding +<br/>cosine similarity</small>
+                    </div>
+                </div>
+                <div class="branch-col">
+                    <div class="branch-label">documentCount ≥ 20</div>
+                    <div class="arrow">↓</div>
+                    <div class="node l3">
+                        <strong>Layer 3: Vector RAG</strong>
+                        <small>Qdrant + GPT-4o-mini<br/>çalışır durumda</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout info">
+            <strong>Eşik değerleri.</strong> Burada gösterdiğim değerler (5 ve 20) demo modu için.
+            Üretim modunda 50 ve 200 olarak tanımlı. İki rakamı da <code>appsettings.json</code>
+            dosyasından değiştirmek mümkün. 50 ve 200'ü neden seçtiğimi deney sonuçları bölümünde anlatıyorum.
+        </div>
+
+        <h3>Her katman ne yapıyor?</h3>
+
+        <p>
+            <strong style="color:var(--layer1);">Layer 1: Keyword (BM25).</strong>
+            <span class="term">BM25 <small class="term-def">(Best Matching 25: kelimenin belgede ne kadar geçtiğine ve nadir bir kelime olup olmadığına göre puan veren klasik bir arama algoritması)</small></span>
+            kullanıyor. Soruyla belgelerdeki ortak kelimelere bakıyor, en çok eşleşeni döndürüyor.
+            Yapay zeka kullanmıyor, internete çıkmıyor, hızlı ve deterministik; aynı sorguya her zaman aynı sonucu veriyor.
+            Sıfır belge varken bile "henüz belge yok" diye anlamlı bir cevap dönüyor, sistem hiç sessiz kalmıyor.
+        </p>
+        <p>
+            <strong style="color:var(--layer2);">Layer 2: Lightweight Embedding.</strong>
+            Sorguyu ve her belgeyi OpenAI'ın <code>text-embedding-3-small</code> modeliyle 1536 boyutlu birer vektöre çeviriyorum.
+            Sonra
+            <span class="term">cosine similarity <small class="term-def">(iki vektörün ne kadar aynı yönü gösterdiğini ölçen formül; 1.0'a yaklaştıkça benzerlik yüksek)</small></span>
+            ile en yakın belgeleri buluyorum. Bu katman anlamı yakalıyor: kullanıcı "çevik" yazsa bile
+            "agile" geçen belgeyi getirebiliyor. Burada LLM cevap üretmiyor, sadece doğru belgeler sıralanıyor.
+        </p>
+        <p>
+            <strong style="color:var(--layer3);">Layer 3: Vector RAG.</strong>
+            En güçlü katman ve şu an çalışır durumda.
+            Belgeler parçalara (chunk) bölünüp embedding'leriyle birlikte
+            <span class="term">Qdrant <small class="term-def">(açık kaynaklı bir vektör veri tabanı; milyonlarca embedding'i çok hızlı arar)</small></span>'a
+            yazılıyor. Sorgu geldiğinde en yakın parçalar bulunuyor ve
+            <span class="term">LLM <small class="term-def">(Large Language Model: GPT-4o-mini gibi büyük dil modelleri; metinden metin üretir)</small></span>'e
+            bağlam olarak veriliyor. GPT-4o-mini bu parçaları okuyup gerçek bir cevap yazıyor ve hangi
+            belgelere dayandığını köşeli parantezle belirtiyor. Belgelerde olmayan bir şey sorulursa
+            "bu soruya mevcut belgelerle cevap veremiyorum" diyor, uydurmuyor.
+        </p>
+    </section>
+
+    <!-- 4. Akışlar -->
+    <section>
+        <h2><span class="num">4</span>Sistemin Akışı</h2>
+
+        <h3>4.1 Bir sorgu nasıl yanıtlanıyor?</h3>
+        <div class="diagram">
+            <div class="node user"><strong>1. Kullanıcı</strong><small>"çevik sprint nasıl çalışır?" yazar</small></div>
+            <div class="arrow">↓</div>
+            <div class="node api"><strong>2. POST /api/search</strong><small>JSON: { query, topK }</small></div>
+            <div class="arrow">↓</div>
+            <div class="node service"><strong>3. SearchController</strong><small>İçinde mantık yok, isteği servise iletir</small></div>
+            <div class="arrow">↓</div>
+            <div class="node service"><strong>4. PipelineRouter</strong><small>documentCount'u okur, doğru katmanı seçer</small></div>
+            <div class="arrow">↓</div>
+            <div class="node l2"><strong>5. Aktif katman</strong><small>Arama yapılır, kaynaklar skorlanır</small></div>
+            <div class="arrow">↓</div>
+            <div class="node api"><strong>6. Cevap JSON</strong><small>answer + kaynaklar + skorlar + aktif katman</small></div>
+        </div>
+        <p>
+            Her arama ayrıca metrik kaydına düşüyor: hangi katman cevapladı, kaç milisaniye sürdü,
+            o anda kaç belge vardı. Bu kayıtları demo ekranındaki "Runtime Metrikleri" panelinde gösteriyorum.
+        </p>
+
+        <h3>4.2 Belge nasıl ekleniyor?</h3>
+        <div class="diagram">
+            <div class="node user"><strong>1. Belge metni</strong><small>Demo arayüzünden veya POST /api/document</small></div>
+            <div class="arrow">↓</div>
+            <div class="node service"><strong>2. DocumentIngestService</strong><small>İçerik boş mu? 10.000 karakteri aşıyor mu?</small></div>
+            <div class="arrow">↓</div>
+            <div class="node store"><strong>3. InMemoryDocumentStore</strong><small>Belge bellekte tutulur</small></div>
+            <div class="arrow">↓</div>
+            <div class="node service"><strong>4. Durum güncellenir</strong><small>documentCount artar, eşik aşıldıysa katman otomatik değişir</small></div>
+        </div>
+        <p>
+            Embedding'leri ekleme anında üretmiyorum, bilerek erteliyorum (lazy yaklaşım). Eksik embedding'ler
+            ilk Layer 2 sorgusunda toplu olarak hesaplanıp belgeye geri yazılıyor. Aynı mantık Layer 3 için de geçerli:
+            Qdrant indeksi ilk Layer 3 aramasında belge deposuyla eşitleniyor. Eksik belgeler parçalanıp indekslenirken,
+            silinmiş belgeler indeksten düşüyor; içeriği değişen belgeyi de içerik özetinden (hash) yakalayıp yeniden indeksliyorum.
+            Sebep basit: corpus küçükken Layer 1 zaten yeterli, embedding ve indeksleme maliyetini erken ödemek istemiyorum.
+        </p>
+
+        <h3>4.3 Katmanlar arasında geçiş</h3>
+        <div class="diagram">
+            <div class="node l1"><strong>Başlangıç · 0 belge</strong><small>Layer 1 aktif</small></div>
+            <div class="arrow label">↓<span>belge eklenir</span></div>
+            <div class="node l1"><strong>1-4 belge</strong><small>Hala Layer 1, embedding için yeterli sinyal yok</small></div>
+            <div class="arrow label">↓<span>5. belge eklenince</span></div>
+            <div class="node l2"><strong>5-19 belge</strong><small>Otomatik Layer 2, anlamsal arama</small></div>
+            <div class="arrow label">↓<span>20. belge eklenince</span></div>
+            <div class="node l3"><strong>≥ 20 belge</strong><small>Otomatik Layer 3, tam RAG cevabı</small></div>
+        </div>
+        <p>
+            Geçiş tamamen otomatik. Kullanıcı "şimdi Layer 2'ye geç" demiyor; sistem her sorguda belge sayısına bakıp
+            uygun katmanı kendisi seçiyor. Geri yönde de çalışıyor: belgeler silinirse sistem alt katmana dönüyor.
+            Bunu canlı test ederken gördüm, belgeleri temizlediğimde sistem Layer 3'ten Layer 1'e indi ve
+            bu geçiş metrik paneline de yansıdı.
+        </p>
+    </section>
+
+    <!-- 5. Mimari -->
+    <section>
+        <h2><span class="num">5</span>Mimari Yapısı</h2>
+        <p>
+            Sistemi
+            <span class="term">katmanlı mimari <small class="term-def">(her sorumluluğun ayrı bir kod katmanında olması; üst katman alt katmanı bilir, tersi olmaz)</small></span>
+            ile kurdum. Her parça tek bir işten sorumlu.
+        </p>
+
+        <div class="arch">
+            <div class="arch-row">
+                <span class="arch-label">Sunum</span>
+                <div class="arch-contents">
+                    <span class="arch-chip">index.html (demo)</span>
+                    <span class="arch-chip">Swagger UI</span>
+                    <span class="arch-chip">/api/...</span>
+                </div>
+            </div>
+            <div class="arch-row">
+                <span class="arch-label">Controller</span>
+                <div class="arch-contents">
+                    <span class="arch-chip">ApiController (base)</span>
+                    <span class="arch-chip">SearchController</span>
+                    <span class="arch-chip">DocumentController</span>
+                    <span class="arch-chip">StatusController</span>
+                    <span class="arch-chip">EvaluateController</span>
+                    <span class="arch-chip">MetricsController</span>
+                </div>
+            </div>
+            <div class="arch-row">
+                <span class="arch-label">Uygulama</span>
+                <div class="arch-contents">
+                    <span class="arch-chip">PipelineRouter</span>
+                    <span class="arch-chip">MetricsRecordingPipeline</span>
+                    <span class="arch-chip">DocumentIngestService</span>
+                    <span class="arch-chip">EvaluationService</span>
+                </div>
+            </div>
+            <div class="arch-row">
+                <span class="arch-label">Domain</span>
+                <div class="arch-contents">
+                    <span class="arch-chip">ISearchLayer</span>
+                    <span class="arch-chip">IDocumentStore</span>
+                    <span class="arch-chip">IEmbeddingService</span>
+                    <span class="arch-chip">IVectorStore</span>
+                    <span class="arch-chip">IAnswerGenerator</span>
+                    <span class="arch-chip">Result&lt;T&gt;</span>
+                </div>
+            </div>
+            <div class="arch-row">
+                <span class="arch-label">Implementation</span>
+                <div class="arch-contents">
+                    <span class="arch-chip">BM25SearchLayer</span>
+                    <span class="arch-chip">EmbeddingSearch</span>
+                    <span class="arch-chip">VectorRagSearch</span>
+                    <span class="arch-chip">QdrantVectorStore</span>
+                    <span class="arch-chip">SemanticKernelAnswerGenerator</span>
+                    <span class="arch-chip">InMemoryDocumentStore</span>
+                </div>
+            </div>
+        </div>
+
+        <p>
+            Üst katman alt katmanı yalnızca
+            <span class="term">arayüz <small class="term-def">(interface; bir sınıftan ne beklediğimizi anlatan sözleşme, gerçek kod değil)</small></span>
+            üzerinden tanıyor. Mesela Controller, PipelineRouter sınıfının adını bilmiyor; sadece
+            <code>ISearchPipeline</code> arayüzünden hizmet alıyor. Yarın router'ı değiştirsem
+            controller'a dokunmam gerekmez. Buna
+            <span class="term">bağımlılık enjeksiyonu <small class="term-def">(Dependency Injection: bir sınıfa ihtiyaç duyduğu nesneleri içeride üretmek yerine dışarıdan vermek)</small></span>
+            deniyor. Aynı sayede testlerde gerçek OpenAI ve Qdrant yerine sahte (fake) servisler takabiliyorum.
+        </p>
+    </section>
+
+    <!-- 6. Teknoloji -->
+    <section>
+        <h2><span class="num">6</span>Teknoloji Yığını</h2>
+        <table class="endpoints">
+            <thead><tr><th>Katman</th><th>Teknoloji</th><th>Ne için</th></tr></thead>
+            <tbody>
+                <tr><td>Ana dil</td><td><code>.NET 8</code> · <code>C# 12</code></td><td>Tüm sistemin yazıldığı platform</td></tr>
+                <tr><td>Web API</td><td><code>ASP.NET Core 8</code></td><td>HTTP endpoint'leri, Swagger</td></tr>
+                <tr><td>Demo UI</td><td>Vanilla HTML/CSS/JS</td><td>Tek dosya, harici bağımlılık yok</td></tr>
+                <tr><td>Embedding</td><td>OpenAI <code>text-embedding-3-small</code></td><td>Metinleri 1536 boyutlu vektöre çevirir</td></tr>
+                <tr><td>LLM</td><td>OpenAI <code>gpt-4o-mini</code></td><td>Layer 3 cevap üretimi ve hakem puanlaması</td></tr>
+                <tr><td>Vektör DB</td><td><code>Qdrant v1.18.1</code> (Docker)</td><td>Chunk indeksi ve vektör araması</td></tr>
+                <tr><td>RAG orchestration</td><td><code>Microsoft Semantic Kernel 1.40</code></td><td>LLM çağrılarının yönetimi</td></tr>
+                <tr><td>Test</td><td><code>xUnit</code></td><td>37 test: birim + Qdrant integration</td></tr>
+                <tr><td>Deneyler</td><td><code>ColdStart.Experiments</code> (console)</td><td>Eşik doğrulama ve katman karşılaştırma, CSV çıktı</td></tr>
+                <tr><td>Güvenlik</td><td><code>AddRateLimiter</code> · user-secrets · Result pattern</td><td>Rate limit, anahtar yönetimi, kontrollü hata</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- 7. API Endpoint'leri -->
+    <section>
+        <h2><span class="num">7</span>API Endpoint'leri</h2>
+        <p>
+            Sistem dışarıya HTTP üzerinden açık. Aşağıdaki adresleri hem demo arayüzü kullanıyor,
+            hem de istenirse Postman gibi başka bir araçtan çağrılabilirler.
+        </p>
+        <table class="endpoints">
+            <thead><tr><th>Metod</th><th>Adres</th><th>Ne yapar</th></tr></thead>
+            <tbody>
+                <tr><td><span class="method get">GET</span></td><td><code>/api/status</code></td><td>Belge sayısı, aktif katman, bir sonraki eşiğe kalan</td></tr>
+                <tr><td><span class="method post">POST</span></td><td><code>/api/search</code></td><td>Sorgu çalıştırır, cevap ve top-K kaynak döner</td></tr>
+                <tr><td><span class="method post">POST</span></td><td><code>/api/evaluate</code></td><td>Sorgu çalıştırır ve cevabı hakem modele puanlatır (faithfulness, relevancy)</td></tr>
+                <tr><td><span class="method get">GET</span></td><td><code>/api/metrics</code></td><td>Arama kayıtları ve katman geçiş zaman çizelgesi</td></tr>
+                <tr><td><span class="method get">GET</span></td><td><code>/api/document</code></td><td>Tüm belgelerin özet listesi</td></tr>
+                <tr><td><span class="method post">POST</span></td><td><code>/api/document</code></td><td>Yeni belge ekler</td></tr>
+                <tr><td><span class="method delete">DEL</span></td><td><code>/api/document/{id}</code></td><td>Tek belge siler</td></tr>
+                <tr><td><span class="method delete">DEL</span></td><td><code>/api/document</code></td><td>Tüm belgeleri siler (demo için)</td></tr>
+            </tbody>
+        </table>
+        <p>
+            <a href="/swagger" target="_blank">Swagger</a> sayfasında her endpoint'in şeması,
+            örnek istek ve cevapları, bir de "Try it out" düğmesi var.
+        </p>
+    </section>
+
+    <!-- 8. Demo akışı -->
+    <section>
+        <h2><span class="num">8</span>Demo Akışı: Adım Adım</h2>
+        <p>Sunumda izlediğim sıra şu:</p>
+        <ol class="steps">
+            <li>
+                <strong>Tüm belgeleri temizle</strong>
+                <div>Sağdaki "Tümünü temizle" düğmesine basıyorum. Üst şeritte Layer 1 (turuncu) aktif oluyor.</div>
+                <div class="meta">Vurgu: sistemde hiç belge yok, buna rağmen sistem ayakta.</div>
+            </li>
+            <li>
+                <strong>Boş sistemden sorgu</strong>
+                <div>"agile sprint" yazıp Sorgula'ya basıyorum.</div>
+                <div class="meta">Vurgu: cevap üretemiyor ama hata da fırlatmıyor, kullanıcıya durumu söylüyor.</div>
+            </li>
+            <li>
+                <strong>5 belge ekle</strong>
+                <div>Belgeleri birer birer ekliyorum. Beşincide üst şerit yeşile dönüyor, Layer 2 devreye giriyor.</div>
+                <div class="meta">Vurgu: stratejiyi sistem kendisi değiştirdi, ben hiçbir ayara dokunmadım.</div>
+            </li>
+            <li>
+                <strong>Anlam araması</strong>
+                <div>"yazılım sürecinde kalite" yazıyorum. Belgelerde birebir bu kelimeler olmasa da embedding benzerliği yakalıyor.</div>
+                <div class="meta">Vurgu: bu Layer 1'de mümkün değildi, Layer 2 anlamı yakalıyor.</div>
+            </li>
+            <li>
+                <strong>20 belgeye tamamla</strong>
+                <div>Belge sayısı 20 olunca şerit mora dönüyor, Layer 3 aktif. Aynı soruyu tekrar soruyorum; bu sefer GPT-4o-mini kaynaklara dayanan derli toplu bir cevap yazıyor ve hangi belgeleri kullandığını köşeli parantezle gösteriyor.</div>
+                <div class="meta">Vurgu: ilk Layer 3 sorgusu indeksleme yaptığı için biraz bekletiyor, sonrakiler hızlı.</div>
+            </li>
+            <li>
+                <strong>Sorgula + Değerlendir</strong>
+                <div>Aynı sorguyu "Sorgula + Değerlendir" ile çalıştırıyorum. Hakem model cevaba faithfulness ve relevancy puanı veriyor, rozetlerde görünüyor.</div>
+                <div class="meta">Vurgu: cevap kalitesini göz kararı değil, ölçerek konuşuyoruz.</div>
+            </li>
+            <li>
+                <strong>Metrik paneli</strong>
+                <div>Sayfanın altındaki panelde katman geçişlerinin zaman çizelgesi ve son aramaların süreleri duruyor.</div>
+                <div class="meta">Vurgu: 1'den 2'ye, 2'den 3'e geçişler kaç belgede olmuş, tek bakışta görülüyor.</div>
+            </li>
+        </ol>
+    </section>
+
+    <!-- 9. Deney sonuçları -->
+    <section>
+        <h2><span class="num">9</span>Deney Sonuçları</h2>
+        <p>
+            İddiaları ölçmeden bırakmak istemedim. <code>experiments/ColdStart.Experiments</code> altında bir
+            deney koşucusu yazdım; üç deney yapıyor ve sonuçları CSV olarak <code>data/results/</code> klasörüne bırakıyor.
+            Cevap kalitesini GPT-4o-mini'yi hakem olarak kullanıp iki metrikle puanlattım:
+            faithfulness (cevap kaynaklara sadık mı) ve answer relevancy (cevap soruyla alakalı mı).
+        </p>
+
+        <h3>9.1 Geçiş doğruluğu</h3>
+        <p>
+            Üç farklı eşik ayarında, eşiklerin tam sınırındaki belge sayılarıyla 30 ölçüm yaptım.
+            Router 30 ölçümün 30'unda da beklenen katmanı seçti. Geçişler tam eşik değerinde gerçekleşiyor,
+            kayma yok.
+        </p>
+
+        <h3>9.2 Strateji karşılaştırması (küçük corpus, 30 belgeye kadar)</h3>
+        <table class="results">
+            <thead><tr><th>Strateji</th><th>Relevancy</th><th>Faithfulness</th><th>Ortalama süre</th></tr></thead>
+            <tbody>
+                <tr><td>Adaptif (bu projedeki yaklaşım)</td><td class="num">0.55</td><td class="num">0.75</td><td class="num">~1 ms</td></tr>
+                <tr><td>Sadece embedding</td><td class="num">0.43</td><td class="num">0.59</td><td class="num">369 ms</td></tr>
+                <tr><td>Sadece RAG</td><td class="num">0.75</td><td class="num">0.75</td><td class="num">1862 ms</td></tr>
+            </tbody>
+        </table>
+        <p>
+            Az belge varken BM25, embedding tabanlı aramadan daha alakalı sonuç veriyor ve bunu sıfır maliyetle,
+            milisaniye içinde yapıyor. Tam RAG en kaliteli cevabı veriyor ama her sorguda hem para hem
+            yaklaşık iki saniye bekleme bedeli var. Adaptif yaklaşımın mantığı tam da bu: LLM maliyetini
+            corpus bunu hak edene kadar ertele.
+        </p>
+
+        <h3>9.3 Eşikler doğru yerde mi?</h3>
+        <table class="results">
+            <thead><tr><th>Corpus</th><th>Layer 1 relevancy</th><th>Layer 2 relevancy</th><th>Layer 3 relevancy</th></tr></thead>
+            <tbody>
+                <tr><td class="num">10 belge</td><td class="num"><strong>0.77</strong></td><td class="num">0.53</td><td class="num">1.00</td></tr>
+                <tr><td class="num">25 belge</td><td class="num"><strong>0.60</strong></td><td class="num">0.50</td><td class="num">1.00</td></tr>
+                <tr><td class="num">50 belge</td><td class="num">0.50</td><td class="num"><strong>0.60</strong></td><td class="num">1.00</td></tr>
+                <tr><td class="num">100 belge</td><td class="num">0.50</td><td class="num"><strong>0.57</strong></td><td class="num">1.00</td></tr>
+            </tbody>
+        </table>
+        <p>
+            Corpus büyüdükçe Layer 1'in kalitesi düşüyor (kelime eşleşmesi kalabalıkta gürültüye boğuluyor),
+            Layer 2 ise sabit kalıyor. İkisinin kesiştiği nokta 50 belge civarı; üretim eşiğini 50 seçmemin
+            ampirik dayanağı bu. Layer 3 her boyutta en kaliteli ama en pahalı ve en yavaş katman;
+            o yüzden ona geçişi 200 belgeye erteliyorum. Bu bir kalite kararı değil, maliyet fayda kararı.
+        </p>
+    </section>
+
+    <!-- 10. Akademik katkı -->
+    <section>
+        <h2><span class="num">10</span>Akademik Katkı</h2>
+        <p>
+            RAG literatürü (Lewis 2020; Gao 2024; Asai 2024) yeterli bilgi tabanı varsayıyor. Hybrid RAG
+            çalışmaları (Masood 2024) ise retrieval yöntemlerini hep aynı anda, paralel çalıştırıyor.
+            Veri yoğunluğuna göre <strong>sırayla katman değiştiren</strong> bir mimariyi sistematik olarak
+            ele alan bir çalışmaya rastlamadım.
+        </p>
+        <p>Bu projenin katkıları:</p>
+        <ul>
+            <li><strong>Adaptif geçiş mekanizması.</strong> Sistem belge sayısına göre stratejisini kendisi değiştiriyor, geri dönüş de dahil.</li>
+            <li><strong>Hibrit bütünleşik mimari.</strong> Kural tabanlı (BM25), parametrik (embedding) ve üretken (LLM) yaklaşımlar tek arayüz altında birleşiyor.</li>
+            <li><strong>Ampirik eşik doğrulaması.</strong> 50 belge eşiği tahmin değil; Layer 1 ve Layer 2 kalite eğrilerinin kesişiminden geliyor.</li>
+            <li><strong>.NET 8 ekosistemi.</strong> RAG çalışmaları büyük oranda Python tarafında; bu proje .NET tarafındaki boşluğa bir örnek koyuyor.</li>
+            <li><strong>Cold start probleminin bilgi araması bağlamında ele alınması.</strong> ColdRAG (Chen 2025) bu problemi öneri sistemleri için incelemişti.</li>
+        </ul>
+    </section>
+
+    <!-- 11. Sözlük -->
+    <section>
+        <h2><span class="num">11</span>Terim Sözlüğü</h2>
+        <dl class="glossary">
+            <dt>RAG <span class="en">(Retrieval-Augmented Generation)</span></dt>
+            <dd>Bir dil modeline cevap ürettirmeden önce, dış bir bilgi tabanından soruyla ilgili belgeleri çekip modele veren teknik. Modelin uydurma yapmasını azaltır.</dd>
+
+            <dt>Cold Start</dt>
+            <dd>Bir sistemin ilk açıldığında elinde yeterli veri olmaması durumu. RAG için: vektör veri tabanı boş, embedding üretilmemiş, anlam araması yapılamıyor.</dd>
+
+            <dt>Embedding</dt>
+            <dd>Bir metnin anlamını sayılarla ifade eden vektör (bizde 1536 boyutlu). Aynı anlamı taşıyan iki cümlenin embedding'i birbirine yakın çıkar.</dd>
+
+            <dt>Cosine Similarity <span class="en">(kosinüs benzerliği)</span></dt>
+            <dd>İki vektör arasındaki açının kosinüsü. 1.0 aynı yön (çok benzer), 0 dik (alakasız). Embedding karşılaştırmasında standart ölçüt.</dd>
+
+            <dt>BM25 <span class="en">(Best Matching 25)</span></dt>
+            <dd>Klasik bir bilgi getirme algoritması. Bir terimin belgede ne kadar sık geçtiğini (TF) ve genelde ne kadar nadir olduğunu (IDF) birleştirip puan verir.</dd>
+
+            <dt>LLM <span class="en">(Large Language Model)</span></dt>
+            <dd>GPT-4o-mini gibi büyük dil modelleri. Metin alır, metin üretir.</dd>
+
+            <dt>Chunk / Chunking</dt>
+            <dd>Uzun bir belgeyi aranabilir küçük parçalara bölme işlemi. Bu projede sabit boyutlu, örtüşmeli parçalama kullandım: 800 karakterlik pencereler, 100 karakter örtüşme, kelime ortasından kesmeden.</dd>
+
+            <dt>Vector Database <span class="en">(vektör veri tabanı)</span></dt>
+            <dd>Embedding'leri saklayan ve "bu vektöre en yakın 5 vektör hangileri" sorusuna milisaniyeler içinde cevap veren özelleşmiş veri tabanı. Qdrant, Pinecone, Weaviate örnek.</dd>
+
+            <dt>Qdrant</dt>
+            <dd>Açık kaynaklı, Rust ile yazılmış vektör veri tabanı. Layer 3'ün chunk indeksi burada duruyor. Docker ile tek komutta ayağa kalkıyor.</dd>
+
+            <dt>Semantic Kernel</dt>
+            <dd>Microsoft'un açık kaynaklı kütüphanesi. LLM çağrılarını .NET içinde düzenli kurmayı sağlıyor. Layer 3'te cevap üretimi ve hakem puanlaması bunun üzerinden gidiyor.</dd>
+
+            <dt>LLM-as-a-judge <span class="en">(hakem model)</span></dt>
+            <dd>Bir cevabın kalitesini başka bir LLM'e puanlatma yöntemi. Bu projede GPT-4o-mini hakem rolünde; her cevaba faithfulness ve relevancy puanı veriyor.</dd>
+
+            <dt>Faithfulness <span class="en">(sadakat)</span></dt>
+            <dd>Cevabın yalnızca kaynak belgelere dayanma derecesi. 1.0 ise cevaptaki her iddia kaynaklarda var demek; düşükse model uydurmuş demek.</dd>
+
+            <dt>Answer Relevancy <span class="en">(cevap alakası)</span></dt>
+            <dd>Cevabın sorulan soruyu ne kadar doğrudan karşıladığı. Kaynaklara sadık ama konudan sapan bir cevap düşük relevancy alır.</dd>
+
+            <dt>Pipeline <span class="en">(boru hattı)</span></dt>
+            <dd>Bir isteğin sırayla birden çok adımdan geçtiği akış. Bizdeki hat: belge sayısını oku, katmanı seç, aramayı yap, cevabı döndür.</dd>
+
+            <dt>Threshold <span class="en">(eşik)</span></dt>
+            <dd>Karar verirken kullanılan sayısal sınır. Üretim ayarları: <code>Layer2Threshold = 50</code>, <code>Layer3Threshold = 200</code>.</dd>
+
+            <dt>Endpoint</dt>
+            <dd>Bir HTTP API'sinin dışarıya açtığı erişim noktası. Örnek: <code>POST /api/search</code>.</dd>
+
+            <dt>Controller</dt>
+            <dd>HTTP isteğini karşılayan, ilgili servise ileten ve cevabı döndüren sınıf. İçinde iş mantığı tutmuyorum, sadece yönlendirme yapıyor.</dd>
+
+            <dt>Dependency Injection <span class="en">(bağımlılık enjeksiyonu)</span></dt>
+            <dd>Bir sınıfın ihtiyaç duyduğu nesneleri kendisi üretmek yerine dışarıdan alması. Test yazmayı ve parça değiştirmeyi kolaylaştırıyor.</dd>
+
+            <dt>Result Pattern</dt>
+            <dd>Servislerin sonucu (başarılı mı, değer ne, hata ne) tek bir nesneyle dönmesi. Exception fırlatmaya göre daha öngörülebilir.</dd>
+
+            <dt>Rate Limit <span class="en">(hız sınırı)</span></dt>
+            <dd>Birim zamanda kabul edilen istek sayısının üst sınırı. Bizde IP başına dakikada 120 istek; aşan HTTP 429 alıyor.</dd>
+
+            <dt>XSS <span class="en">(Cross-Site Scripting)</span></dt>
+            <dd>Saldırganın kullanıcı tarayıcısında zararlı betik çalıştırması. Arayüzde kullanıcı kaynaklı her veriyi <code>textContent</code> ile yazarak bu kapıyı kapattım.</dd>
+
+            <dt>Prompt Injection</dt>
+            <dd>Belgelerin içine "önceki talimatları unut" gibi gizli komutlar saklayıp LLM'i yanıltma saldırısı. Layer 3'te buna karşı spotlighting uyguluyorum: belge içerikleri özel işaretler arasına alınıyor ve modele bu içeriğin veri olduğu, talimat olmadığı söyleniyor.</dd>
+
+            <dt>Spotlighting</dt>
+            <dd>LLM'e verilen dış içeriği belirgin sınırlarla işaretleme tekniği. Bizde belgeler DOC_START ve DOC_END işaretleri arasında gidiyor.</dd>
+
+            <dt>Swagger / OpenAPI</dt>
+            <dd>Bir web API'sinin endpoint'lerini otomatik dokümante eden ve test arayüzü sunan standart. Projede <code>/swagger</code> adresinde.</dd>
+
+            <dt>In-Memory Store <span class="en">(bellek içi depo)</span></dt>
+            <dd>Verileri RAM'de tutan, yeniden başlatınca kaybeden depo. Hızlı ama kalıcı değil. Akademik prototip için bilinçli bir tercih; kalıcı depolama gelecek çalışma konusu.</dd>
+        </dl>
+    </section>
+
+</article>
+</main>
+
+<footer>
+    Kubilay Özyalçın · İstanbul Nişantaşı Üniversitesi · Bahar 2025-26<br/>
+    Danışman: Prof. Dr. Yaşar Hoşcan · <a href="/">Demoyu aç</a> · <a href="/swagger" target="_blank">Swagger</a>
+</footer>
+
+</body>
+</html>

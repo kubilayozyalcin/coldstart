@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- API projesiyle aynı secrets deposu: OpenAi:ApiKey tek yerden yönetilir. -->
+    <UserSecretsId>50af3eab-1233-4ab4-8e93-252eb13d5d28</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ColdStart.Core\ColdStart.Core.csproj" />
+    <ProjectReference Include="..\..\src\ColdStart.Persistence\ColdStart.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\ColdStart.Keyword\ColdStart.Keyword.csproj" />
+    <ProjectReference Include="..\..\src\ColdStart.Embedding\ColdStart.Embedding.csproj" />
+    <ProjectReference Include="..\..\src\ColdStart.VectorRag\ColdStart.VectorRag.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>

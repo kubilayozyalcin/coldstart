@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>50af3eab-1233-4ab4-8e93-252eb13d5d28</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ColdStart.Core\ColdStart.Core.csproj" />
+    <ProjectReference Include="..\ColdStart.Persistence\ColdStart.Persistence.csproj" />
+    <ProjectReference Include="..\ColdStart.Keyword\ColdStart.Keyword.csproj" />
+    <ProjectReference Include="..\ColdStart.Embedding\ColdStart.Embedding.csproj" />
+    <ProjectReference Include="..\ColdStart.VectorRag\ColdStart.VectorRag.csproj" />
+  </ItemGroup>
+
+</Project>

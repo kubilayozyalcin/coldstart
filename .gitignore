@@ -1,0 +1,29 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.DS_Store
+
+# Rider
+*.iml
+.idea/
+
+# User secrets
+secrets/
+appsettings.Development.json
+appsettings.Local.json
+
+# Logs
+logs/
+*.log
+
+# Ortam değişkenleri (API anahtarı)
+.env
+
+# Kişisel bilgi içeren teslim dokümanları (zip'te kalır, public repoya girmez)
+docs/ColdStart_Bitirme_Projesi_Raporu.docx
+docs/ColdStart_Bitirme_Projesi_Raporu.pdf
