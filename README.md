@@ -1,7 +1,7 @@
 # ColdStart — Sparse Knowledge Environments için Adaptif Hibrit RAG
 
 > İstanbul Nişantaşı Üniversitesi · Bilgisayar Mühendisliği Tezsiz Yüksek Lisans Bitirme Projesi
-> Kubilay Özyalçın · 20251575002 · Bahar 2025-26
+> Kubilay Özyalçın · ********* · Bahar 2025-26
 
 ## Problem
 
