@@ -211,7 +211,7 @@
         ul#sources li .score { text-align: right; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--primary); font-weight: 600; }
 
         .exp-note { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 8px; }
-        .exp-chart-wrap { position: relative; height: 280px; }
+        .exp-chart-wrap { position: relative; height: 320px; max-width: 980px; margin: 0 auto; }
 
         .doc-list { list-style: none; padding: 0; margin: 0; max-height: 460px; overflow-y: auto; }
         .doc-list li {
@@ -779,7 +779,8 @@
                 tension: 0.25,
                 spanGaps: true,
                 pointRadius: 3.5,
-                pointHoverRadius: 5
+                pointHoverRadius: 5,
+                clip: false
             });
         }
 
@@ -789,10 +790,12 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: { padding: { top: 8, right: 8 } },
                 interaction: { mode: 'nearest', intersect: false },
                 scales: {
                     y: {
                         min: 0, max: 1,
+                        ticks: { stepSize: 0.25, callback: v => v.toFixed(2) },
                         title: { display: true, text: 'Answer relevancy' },
                         grid: { color: 'rgba(15, 23, 42, .06)' }
                     },
