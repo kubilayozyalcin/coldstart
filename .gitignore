@@ -1,0 +1,22 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.DS_Store
+
+# Rider
+*.iml
+.idea/
+
+# User secrets
+secrets/
+appsettings.Development.json
+appsettings.Local.json
+
+# Logs
+logs/
+*.log

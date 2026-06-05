@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ColdStart — Adaptif Hibrit RAG</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --layer1: #f59e0b;
+            --layer2: #10b981;
+            --layer3: #8b5cf6;
+            --code-bg: #f1f5f9;
+            --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 4px 12px rgba(15, 23, 42, .04);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        code, pre, .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+        header .subtitle { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+        header .meta { font-size: 12px; color: var(--muted); }
+        header .meta strong { color: var(--text); font-weight: 600; }
+
+        .status {
+            padding: 18px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .layers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .layer {
+            position: relative;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            transition: all .2s ease;
+        }
+        .layer .num { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+        .layer .name { font-size: 15px; font-weight: 600; margin-top: 2px; }
+        .layer .detail { font-size: 12px; color: var(--muted); margin-top: 3px; }
+        .layer.active { border-color: transparent; color: white; box-shadow: var(--shadow); }
+        .layer.active .num,
+        .layer.active .detail { color: rgba(255,255,255,.85); }
+        .layer.active[data-layer="1"] { background: var(--layer1); }
+        .layer.active[data-layer="2"] { background: var(--layer2); }
+        .layer.active[data-layer="3"] { background: var(--layer3); }
+        .layer .dot {
+            position: absolute; top: 10px; right: 12px;
+            width: 8px; height: 8px; border-radius: 50%; background: var(--border);
+        }
+        .layer.active .dot { background: white; box-shadow: 0 0 0 3px rgba(255,255,255,.3); }
+
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat {
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+        .stat .label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-weight: 600;
+        }
+        .stat .value {
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        main {
+            padding: 24px 28px;
+            display: grid;
+            grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+            gap: 24px;
+            max-width: 1500px;
+        }
+
+        section.card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+        section.card h2 { margin: 0 0 14px; font-size: 16px; font-weight: 600; }
+        section.card h3 { margin: 16px 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+        section.card h3:first-of-type { margin-top: 0; }
+
+        textarea, input[type=text], input[type=number] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 13px;
+            background: var(--surface);
+            color: var(--text);
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        textarea { resize: vertical; min-height: 64px; }
+        textarea:focus, input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, .1); }
+
+        .row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+        .row label { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+        .row label input { width: 64px; }
+        .row .spacer { flex: 1; }
+
+        button {
+            padding: 9px 16px;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .15s;
+            background: var(--primary);
+            color: white;
+        }
+        button:hover { background: var(--primary-hover); }
+        button:disabled { opacity: .55; cursor: not-allowed; }
+        button.danger { background: var(--danger); }
+        button.danger:hover { background: var(--danger-hover); }
+        button.ghost { background: transparent; color: var(--muted); padding: 4px 8px; font-size: 12px; }
+        button.ghost:hover { background: var(--code-bg); color: var(--text); }
+
+        .answer-meta {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+            font-size: 12px; color: var(--muted);
+        }
+        .layer-tag {
+            display: inline-block; padding: 2px 8px; border-radius: 999px;
+            font-size: 11px; font-weight: 600; color: white;
+        }
+        .layer-tag[data-layer="1"] { background: var(--layer1); }
+        .layer-tag[data-layer="2"] { background: var(--layer2); }
+        .layer-tag[data-layer="3"] { background: var(--layer3); }
+
+        pre#answer {
+            background: var(--code-bg);
+            padding: 14px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 0;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        ul#sources { list-style: none; padding: 0; margin: 0; }
+        ul#sources li {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12.5px;
+            display: grid;
+            grid-template-columns: 110px 1fr 80px;
+            gap: 10px;
+            align-items: center;
+        }
+        ul#sources li .doc-id { font-weight: 600; font-family: "JetBrains Mono", monospace; font-size: 12px; }
+        ul#sources li .snippet { color: var(--muted); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        ul#sources li .score { text-align: right; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--primary); font-weight: 600; }
+
+        .doc-list { list-style: none; padding: 0; margin: 0; max-height: 460px; overflow-y: auto; }
+        .doc-list li {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            align-items: start;
+        }
+        .doc-list li:last-child { border-bottom: none; }
+        .doc-list .doc-meta { font-size: 11px; color: var(--muted); margin-bottom: 2px; display: flex; gap: 8px; align-items: center; }
+        .doc-list .doc-id { font-family: "JetBrains Mono", monospace; font-weight: 600; color: var(--text); }
+        .doc-list .embed-tag {
+            display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 999px;
+            background: var(--code-bg); color: var(--muted); font-weight: 500;
+        }
+        .doc-list .embed-tag.ready { background: rgba(16, 185, 129, .12); color: #047857; }
+        .doc-list .preview { font-size: 12.5px; color: var(--text); line-height: 1.5; }
+
+        .span-2 { grid-column: 1 / -1; }
+
+        .scores { display: flex; gap: 10px; margin-bottom: 8px; }
+        .score-badge {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+        }
+        .score-badge .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+        .score-badge .value { font-size: 18px; font-weight: 600; font-family: "JetBrains Mono", monospace; }
+        .score-badge.good .value { color: #047857; }
+        .score-badge.mid .value { color: #b45309; }
+        .score-badge.bad .value { color: var(--danger); }
+        .rationale { font-size: 12.5px; color: var(--muted); font-style: italic; margin-top: 4px; }
+
+        table.metrics { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        table.metrics th, table.metrics td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+        table.metrics th { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+        table.metrics td.num { font-family: "JetBrains Mono", monospace; font-size: 12px; }
+
+        .transition-list { list-style: none; padding: 0; margin: 0; }
+        .transition-list li {
+            display: flex; gap: 10px; align-items: center;
+            padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px;
+            font-size: 12.5px;
+        }
+        .transition-list .arrow { color: var(--muted); }
+        .transition-list .when { margin-left: auto; color: var(--muted); font-size: 11.5px; }
+
+        .error {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(220, 38, 38, .08);
+            border: 1px solid rgba(220, 38, 38, .25);
+            color: var(--danger);
+            border-radius: 6px;
+            font-size: 12.5px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 12.5px;
+        }
+
+        .hidden { display: none; }
+
+        footer {
+            padding: 18px 28px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 11.5px;
+            display: flex;
+            justify-content: space-between;
+            background: var(--surface);
+        }
+        footer a { color: var(--primary); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 980px) {
+            .status, main { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>ColdStart</h1>
+        <p class="subtitle">Adaptif Hibrit RAG · Cold Start Demo</p>
+    </div>
+    <div class="meta">
+        <strong>.NET 8</strong> · OpenAI <code>text-embedding-3-small</code> · BM25
+    </div>
+</header>
+
+<section class="status">
+    <div class="layers">
+        <div class="layer" data-layer="1">
+            <div class="num">Layer 1</div>
+            <div class="name">Keyword</div>
+            <div class="detail">BM25 — deterministik baseline</div>
+            <div class="dot"></div>
+        </div>
+        <div class="layer" data-layer="2">
+            <div class="num">Layer 2</div>
+            <div class="name">Lightweight Embedding</div>
+            <div class="detail">OpenAI embedding + cosine</div>
+            <div class="dot"></div>
+        </div>
+        <div class="layer" data-layer="3">
+            <div class="num">Layer 3</div>
+            <div class="name">Vector RAG</div>
+            <div class="detail">Qdrant + GPT-4o-mini (Faz 3)</div>
+            <div class="dot"></div>
+        </div>
+    </div>
+    <div class="stats">
+        <div class="stat">
+            <span class="label">Belge sayısı</span>
+            <span class="value" id="doc-count">—</span>
+        </div>
+        <div class="stat">
+            <span class="label">Aktif katman</span>
+            <span class="value" id="active-layer">—</span>
+        </div>
+        <div class="stat">
+            <span class="label">Sonraki eşiğe kalan</span>
+            <span class="value" id="until-next">—</span>
+        </div>
+    </div>
+</section>
+
+<main>
+    <section class="card">
+        <h2>Sorgu</h2>
+        <textarea id="query" rows="3" placeholder="Örnek: çevik sprint nasıl çalışır?"></textarea>
+        <div class="row">
+            <label>topK <input id="topk" type="number" min="1" max="20" value="5" /></label>
+            <div class="spacer"></div>
+            <button id="evaluate-btn" class="ghost" title="Cevabı LLM-as-a-judge ile puanla (ek OpenAI çağrısı yapar)">Sorgula + Değerlendir</button>
+            <button id="search-btn">Sorgula</button>
+        </div>
+        <div id="search-error" class="error hidden"></div>
+
+        <div id="answer-card" class="hidden">
+            <h3>Cevap</h3>
+            <div class="answer-meta">
+                <span id="answer-layer-tag" class="layer-tag"></span>
+                <span id="answer-meta-text"></span>
+            </div>
+            <pre id="answer"></pre>
+            <div id="eval-card" class="hidden">
+                <h3>Değerlendirme — LLM-as-a-judge</h3>
+                <div class="scores">
+                    <div class="score-badge" id="score-faith">
+                        <div class="label">Faithfulness</div>
+                        <div class="value">—</div>
+                    </div>
+                    <div class="score-badge" id="score-rel">
+                        <div class="label">Answer Relevancy</div>
+                        <div class="value">—</div>
+                    </div>
+                </div>
+                <div id="eval-rationale" class="rationale"></div>
+            </div>
+            <h3>Kaynaklar</h3>
+            <ul id="sources"></ul>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>Belge Yönetimi</h2>
+        <h3>Yeni belge ekle</h3>
+        <input id="doc-id" type="text" placeholder="id (opsiyonel)" />
+        <textarea id="doc-content" rows="3" placeholder="Belge içeriği" style="margin-top:8px"></textarea>
+        <div class="row">
+            <button id="add-btn">Ekle</button>
+            <div class="spacer"></div>
+            <button id="clear-btn" class="danger">Tümünü temizle</button>
+        </div>
+        <div id="doc-error" class="error hidden"></div>
+
+        <h3>Belgeler (<span id="doc-list-count">0</span>)</h3>
+        <ul id="doc-list" class="doc-list"></ul>
+        <div id="doc-empty" class="empty hidden">Henüz belge yok. Yukarıdan ekleyebilirsin.</div>
+    </section>
+
+    <section class="card span-2">
+        <h2>Runtime Metrikleri</h2>
+        <h3>Katman geçişleri</h3>
+        <ul id="transitions" class="transition-list"></ul>
+        <div id="transitions-empty" class="empty">Henüz katman geçişi gözlenmedi. Belge ekleyip eşikleri aşınca burada görünür.</div>
+        <h3>Son aramalar</h3>
+        <table class="metrics">
+            <thead>
+            <tr>
+                <th>Zaman</th>
+                <th>Katman</th>
+                <th>Belge</th>
+                <th>Süre</th>
+                <th>Sonuç</th>
+            </tr>
+            </thead>
+            <tbody id="metrics-body"></tbody>
+        </table>
+        <div id="metrics-empty" class="empty">Henüz arama yapılmadı.</div>
+    </section>
+</main>
+
+<footer>
+    <span>Kubilay Özyalçın · 20251575002 · İstanbul Nişantaşı Üni. — Bitirme Projesi · Bahar 2025-26</span>
+    <span>
+        <a href="/docs.html">Dokümantasyon →</a>
+        &nbsp;&nbsp;
+        <a href="/tests.html">Test Senaryoları →</a>
+        &nbsp;&nbsp;
+        <a href="/swagger" target="_blank">Swagger →</a>
+    </span>
+</footer>
+
+<script>
+    const $ = id => document.getElementById(id);
+
+    async function api(path, init = {}) {
+        const res = await fetch(path, {
+            headers: { 'Content-Type': 'application/json' },
+            ...init
+        });
+        const text = await res.text();
+        const body = text ? JSON.parse(text) : null;
+        return { ok: res.ok, status: res.status, body };
+    }
+
+    function highlightLayer(layerNumber) {
+        document.querySelectorAll('.layer').forEach(el => {
+            el.classList.toggle('active', Number(el.dataset.layer) === layerNumber);
+        });
+    }
+
+    async function refreshStatus() {
+        const { ok, body } = await api('/api/status');
+        if (!ok) return;
+        $('doc-count').textContent = body.documentCount;
+        $('active-layer').textContent = body.layerName;
+        $('until-next').textContent = body.documentsUntilNextLayer == null ? '—' : `${body.documentsUntilNextLayer}`;
+        highlightLayer(body.activeLayer);
+    }
+
+    function formatTime(iso) {
+        const d = new Date(iso);
+        return d.toLocaleString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit' });
+    }
+
+    async function refreshDocList() {
+        const { ok, body } = await api('/api/document');
+        if (!ok) return;
+        const list = $('doc-list');
+        const empty = $('doc-empty');
+        $('doc-list-count').textContent = body.length;
+        list.innerHTML = '';
+        if (body.length === 0) {
+            empty.classList.remove('hidden');
+            return;
+        }
+        empty.classList.add('hidden');
+        for (const d of body) {
+            const li = document.createElement('li');
+            const left = document.createElement('div');
+
+            const meta = document.createElement('div');
+            meta.className = 'doc-meta';
+
+            const idSpan = document.createElement('span');
+            idSpan.className = 'doc-id';
+            idSpan.textContent = d.id;
+
+            const embedSpan = document.createElement('span');
+            embedSpan.className = 'embed-tag' + (d.hasEmbedding ? ' ready' : '');
+            embedSpan.textContent = d.hasEmbedding ? '● embed hazır' : '○ embed yok';
+
+            const timeSpan = document.createElement('span');
+            timeSpan.textContent = formatTime(d.createdAt);
+
+            meta.append(idSpan, embedSpan, timeSpan);
+
+            const preview = document.createElement('div');
+            preview.className = 'preview';
+            preview.textContent = d.contentPreview;
+
+            left.append(meta, preview);
+
+            const del = document.createElement('button');
+            del.className = 'ghost';
+            del.textContent = 'sil';
+            del.onclick = () => deleteDoc(d.id);
+
+            li.append(left, del);
+            list.appendChild(li);
+        }
+    }
+
+    function renderSearchResponse(body) {
+        const tag = $('answer-layer-tag');
+        tag.dataset.layer = body.activeLayer;
+        tag.textContent = `Layer ${body.activeLayer} · ${body.layerName}`;
+        $('answer-meta-text').textContent = `${body.sources.length} kaynak · ${body.documentCount} belge`;
+        $('answer').textContent = body.answer;
+        const ul = $('sources');
+        ul.innerHTML = '';
+        for (const s of body.sources) {
+            const li = document.createElement('li');
+            const idEl = document.createElement('span'); idEl.className = 'doc-id'; idEl.textContent = s.documentId;
+            const snip = document.createElement('span'); snip.className = 'snippet'; snip.textContent = s.snippet;
+            const score = document.createElement('span'); score.className = 'score'; score.textContent = s.score.toFixed(3);
+            li.appendChild(idEl); li.appendChild(snip); li.appendChild(score);
+            ul.appendChild(li);
+        }
+        $('answer-card').classList.remove('hidden');
+    }
+
+    function scoreClass(value) {
+        return value >= 0.8 ? 'good' : value >= 0.5 ? 'mid' : 'bad';
+    }
+
+    function renderEvaluation(evaluation) {
+        const faith = $('score-faith');
+        faith.className = `score-badge ${scoreClass(evaluation.faithfulness)}`;
+        faith.querySelector('.value').textContent = evaluation.faithfulness.toFixed(2);
+
+        const rel = $('score-rel');
+        rel.className = `score-badge ${scoreClass(evaluation.answerRelevancy)}`;
+        rel.querySelector('.value').textContent = evaluation.answerRelevancy.toFixed(2);
+
+        $('eval-rationale').textContent = evaluation.rationale
+            ? `${evaluation.rationale} — hakem: ${evaluation.judgeModel}`
+            : `hakem: ${evaluation.judgeModel}`;
+        $('eval-card').classList.remove('hidden');
+    }
+
+    function readQuery() {
+        const query = $('query').value.trim();
+        $('search-error').classList.add('hidden');
+        $('answer-card').classList.add('hidden');
+        $('eval-card').classList.add('hidden');
+        if (!query) {
+            $('search-error').textContent = 'Sorgu boş olamaz.';
+            $('search-error').classList.remove('hidden');
+            return null;
+        }
+        return { query, topK: Number($('topk').value) || 5 };
+    }
+
+    function showApiError(body) {
+        $('search-error').textContent = `${body?.title || 'Hata'}: ${body?.detail || ''}`;
+        $('search-error').classList.remove('hidden');
+    }
+
+    async function doSearch() {
+        const payload = readQuery();
+        if (!payload) return;
+        $('search-btn').disabled = true;
+        $('search-btn').textContent = 'Sorgulanıyor...';
+        try {
+            const { ok, body } = await api('/api/search', { method: 'POST', body: JSON.stringify(payload) });
+            if (!ok) { showApiError(body); return; }
+            renderSearchResponse(body);
+            refreshMetrics();
+        } finally {
+            $('search-btn').disabled = false;
+            $('search-btn').textContent = 'Sorgula';
+        }
+    }
+
+    async function doEvaluate() {
+        const payload = readQuery();
+        if (!payload) return;
+        $('evaluate-btn').disabled = true;
+        $('evaluate-btn').textContent = 'Değerlendiriliyor...';
+        try {
+            const { ok, body } = await api('/api/evaluate', { method: 'POST', body: JSON.stringify(payload) });
+            if (!ok) { showApiError(body); return; }
+            renderSearchResponse(body.search);
+            renderEvaluation(body.evaluation);
+            refreshMetrics();
+        } finally {
+            $('evaluate-btn').disabled = false;
+            $('evaluate-btn').textContent = 'Sorgula + Değerlendir';
+        }
+    }
+
+    async function refreshMetrics() {
+        const { ok, body } = await api('/api/metrics');
+        if (!ok) return;
+
+        const transitions = $('transitions');
+        transitions.innerHTML = '';
+        $('transitions-empty').classList.toggle('hidden', body.transitions.length > 0);
+        for (const t of body.transitions) {
+            const li = document.createElement('li');
+
+            const from = document.createElement('span');
+            from.className = 'layer-tag';
+            from.dataset.layer = t.fromLayer;
+            from.textContent = `Layer ${t.fromLayer}`;
+
+            const arrow = document.createElement('span');
+            arrow.className = 'arrow';
+            arrow.textContent = '→';
+
+            const to = document.createElement('span');
+            to.className = 'layer-tag';
+            to.dataset.layer = t.toLayer;
+            to.textContent = `Layer ${t.toLayer}`;
+
+            const docs = document.createElement('span');
+            docs.textContent = `${t.documentCount} belgede`;
+
+            const when = document.createElement('span');
+            when.className = 'when';
+            when.textContent = formatTime(t.timestamp);
+
+            li.append(from, arrow, to, docs, when);
+            transitions.appendChild(li);
+        }
+
+        const rows = $('metrics-body');
+        rows.innerHTML = '';
+        const recent = body.entries.slice(-10).reverse();
+        $('metrics-empty').classList.toggle('hidden', recent.length > 0);
+        for (const e of recent) {
+            const tr = document.createElement('tr');
+
+            const time = document.createElement('td');
+            time.className = 'num';
+            time.textContent = formatTime(e.timestamp);
+
+            const layer = document.createElement('td');
+            if (e.success) {
+                const tag = document.createElement('span');
+                tag.className = 'layer-tag';
+                tag.dataset.layer = e.activeLayer;
+                tag.textContent = `Layer ${e.activeLayer}`;
+                layer.appendChild(tag);
+            } else {
+                layer.textContent = '—';
+            }
+
+            const docs = document.createElement('td');
+            docs.className = 'num';
+            docs.textContent = e.documentCount;
+
+            const duration = document.createElement('td');
+            duration.className = 'num';
+            duration.textContent = `${e.durationMs} ms`;
+
+            const outcome = document.createElement('td');
+            outcome.textContent = e.success ? '✓' : `✗ ${e.errorCode || ''}`;
+
+            tr.append(time, layer, docs, duration, outcome);
+            rows.appendChild(tr);
+        }
+    }
+
+    async function addDoc() {
+        const id = $('doc-id').value.trim();
+        const content = $('doc-content').value.trim();
+        $('doc-error').classList.add('hidden');
+        if (!content) {
+            $('doc-error').textContent = 'İçerik boş olamaz.';
+            $('doc-error').classList.remove('hidden');
+            return;
+        }
+        $('add-btn').disabled = true;
+        try {
+            const payload = { content };
+            if (id) payload.id = id;
+            const { ok, body } = await api('/api/document', { method: 'POST', body: JSON.stringify(payload) });
+            if (!ok) {
+                $('doc-error').textContent = `${body?.title || 'Hata'}: ${body?.detail || ''}`;
+                $('doc-error').classList.remove('hidden');
+                return;
+            }
+            $('doc-id').value = '';
+            $('doc-content').value = '';
+            await Promise.all([refreshStatus(), refreshDocList()]);
+        } finally {
+            $('add-btn').disabled = false;
+        }
+    }
+
+    async function deleteDoc(id) {
+        if (!confirm(`'${id}' silinsin mi?`)) return;
+        const { ok, body } = await api(`/api/document/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!ok) {
+            alert(body?.detail || 'Silinemedi');
+            return;
+        }
+        await Promise.all([refreshStatus(), refreshDocList()]);
+    }
+
+    async function clearAll() {
+        if (!confirm('Tüm belgeler silinsin mi? Bu işlem geri alınamaz.')) return;
+        const { ok, body } = await api('/api/document', { method: 'DELETE' });
+        if (!ok) {
+            alert(body?.detail || 'Temizlenemedi');
+            return;
+        }
+        await Promise.all([refreshStatus(), refreshDocList()]);
+    }
+
+    $('search-btn').addEventListener('click', doSearch);
+    $('evaluate-btn').addEventListener('click', doEvaluate);
+    $('query').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) doSearch(); });
+    $('add-btn').addEventListener('click', addDoc);
+    $('clear-btn').addEventListener('click', clearAll);
+
+    refreshStatus();
+    refreshDocList();
+    refreshMetrics();
+    setInterval(refreshStatus, 2000);
+</script>
+
+</body>
+</html>

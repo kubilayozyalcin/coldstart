@@ -1,0 +1,47 @@
+# ColdStart bütün sistem: API + Qdrant.
+# Çalıştırmak için:   docker compose up -d --build
+# Durdurmak için:     docker compose down
+# API anahtarı repo kökündeki .env dosyasından okunur (OPENAI_API_KEY=...).
+# Her iki servis de "restart: unless-stopped" — makine yeniden başlasa bile ayağa kalkar.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/ColdStart.Api/Dockerfile
+    container_name: coldstart-api
+    restart: unless-stopped
+    ports:
+      - "5199:8080"
+    environment:
+      # Development: demo eşikleri (5/20), Swagger ve seed verisi aktif.
+      ASPNETCORE_ENVIRONMENT: Development
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY .env dosyasinda tanimli olmali}
+      # Container içinden Qdrant'a servis adıyla ulaşılır, localhost ile değil.
+      Qdrant__Host: qdrant
+    depends_on:
+      qdrant:
+        condition: service_healthy
+  qdrant:
+    # Sürüm, Qdrant.Client NuGet paketiyle (1.18.1) hizalı tutulur — eski server
+    # yeni client'ın vektör encoding'ini ("dense" alanı) tanımaz ve "dim 0" hatası verir.
+    image: qdrant/qdrant:v1.18.1
+    container_name: coldstart-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"     # REST API
+      - "6334:6334"     # gRPC
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__LOG_LEVEL: INFO
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/6333' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  qdrant_storage:
+    name: coldstart_qdrant_storage
