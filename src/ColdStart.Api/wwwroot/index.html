@@ -210,6 +210,9 @@
         ul#sources li .snippet { color: var(--muted); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
         ul#sources li .score { text-align: right; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--primary); font-weight: 600; }
 
+        .exp-note { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 8px; }
+        .exp-chart-wrap { position: relative; height: 280px; }
+
         .doc-list { list-style: none; padding: 0; margin: 0; max-height: 460px; overflow-y: auto; }
         .doc-list li {
             display: grid;
@@ -300,7 +303,7 @@
 
 <header>
     <div>
-        <h1>ColdStart</h1>
+        <h1>Cold Start</h1>
         <p class="subtitle">Adaptif Hibrit RAG · Cold Start Demo</p>
     </div>
     <div class="meta">
@@ -427,6 +430,24 @@
         </table>
         <div id="metrics-empty" class="empty">Henüz arama yapılmadı.</div>
     </section>
+
+    <section class="card span-2 hidden" id="experiments-card">
+        <h2>Batch Deney Sonuçları <span class="exp-note">offline · <span id="exp-file"></span></span></h2>
+        <h3>Answer relevancy — corpus boyutuna göre (GPT-4o-mini hakem, 3 altın sorgu ortalaması)</h3>
+        <div class="exp-chart-wrap"><canvas id="exp-canvas"></canvas></div>
+        <h3>Strateji ortalamaları</h3>
+        <table class="metrics">
+            <thead>
+            <tr>
+                <th>Strateji</th>
+                <th>Relevancy</th>
+                <th>Faithfulness</th>
+                <th>Ortalama süre</th>
+            </tr>
+            </thead>
+            <tbody id="exp-summary"></tbody>
+        </table>
+    </section>
 </main>
 
 <footer>
@@ -440,6 +461,7 @@
     </span>
 </footer>
 
+<script src="/lib/chart.umd.min.js"></script>
 <script>
     const $ = id => document.getElementById(id);
 
@@ -730,6 +752,88 @@
         await Promise.all([refreshStatus(), refreshDocList()]);
     }
 
+    const STRATEGY_META = {
+        'adaptive': { label: 'Adaptif', color: '#2563eb' },
+        'embedding-only': { label: 'Embedding-only', color: '#10b981' },
+        'rag-only': { label: 'RAG-only', color: '#8b5cf6' }
+    };
+
+    async function loadExperiments() {
+        const { ok, body } = await api('/api/experiments/activation');
+        if (!ok || !body.points || body.points.length === 0) return;
+
+        $('exp-file').textContent = body.fileName || '';
+
+        const corpusSizes = [...new Set(body.points.map(p => p.corpusSize))].sort((a, b) => a - b);
+        const datasets = [];
+        for (const [strategy, meta] of Object.entries(STRATEGY_META)) {
+            const byCorpus = new Map(body.points
+                .filter(p => p.strategy === strategy)
+                .map(p => [p.corpusSize, p.relevancy]));
+            if (byCorpus.size === 0) continue;
+            datasets.push({
+                label: meta.label,
+                data: corpusSizes.map(c => byCorpus.has(c) ? byCorpus.get(c) : null),
+                borderColor: meta.color,
+                backgroundColor: meta.color,
+                tension: 0.25,
+                spanGaps: true,
+                pointRadius: 3.5,
+                pointHoverRadius: 5
+            });
+        }
+
+        new Chart($('exp-canvas'), {
+            type: 'line',
+            data: { labels: corpusSizes, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'nearest', intersect: false },
+                scales: {
+                    y: {
+                        min: 0, max: 1,
+                        title: { display: true, text: 'Answer relevancy' },
+                        grid: { color: 'rgba(15, 23, 42, .06)' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Corpus boyutu (belge)' },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, boxHeight: 7 } }
+                }
+            }
+        });
+
+        const summary = $('exp-summary');
+        summary.innerHTML = '';
+        for (const [strategy, meta] of Object.entries(STRATEGY_META)) {
+            const points = body.points.filter(p => p.strategy === strategy);
+            if (points.length === 0) continue;
+            const mean = sel => points.reduce((s, p) => s + sel(p), 0) / points.length;
+
+            const tr = document.createElement('tr');
+            const name = document.createElement('td');
+            name.textContent = meta.label;
+            const rel = document.createElement('td');
+            rel.className = 'num';
+            rel.textContent = mean(p => p.relevancy).toFixed(2);
+            const faith = document.createElement('td');
+            faith.className = 'num';
+            faith.textContent = mean(p => p.faithfulness).toFixed(2);
+            const dur = document.createElement('td');
+            dur.className = 'num';
+            const ms = mean(p => p.durationMs);
+            dur.textContent = ms < 10 ? `${ms.toFixed(1)} ms` : `${Math.round(ms)} ms`;
+            tr.append(name, rel, faith, dur);
+            summary.appendChild(tr);
+        }
+
+        $('experiments-card').classList.remove('hidden');
+    }
+
     $('search-btn').addEventListener('click', doSearch);
     $('evaluate-btn').addEventListener('click', doEvaluate);
     $('query').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) doSearch(); });
@@ -739,6 +843,7 @@
     refreshStatus();
     refreshDocList();
     refreshMetrics();
+    loadExperiments();
     setInterval(refreshStatus, 2000);
 </script>
 

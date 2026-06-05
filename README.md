@@ -96,15 +96,15 @@ dotnet run --project experiments/ColdStart.Experiments -- sensitivity --with-llm
 
 **Eşik doğrulaması:** Layer transition accuracy 3 konfigürasyonda **30/30 (%100)** — geçişler tam eşik değerinde.
 
-**Strateji karşılaştırması** (corpus ≤ 30 belge, 3 altın sorgu):
+**Strateji karşılaştırması** (corpus ≤ 30 belge, 3 altın sorgu; cevap kompozisyonunda göreli skor eşiği — answer gating — aktif):
 
-| Strateji | Relevancy | Faithfulness | Gecikme | hit@3 |
+| Strateji | Relevancy | Relevancy (hit-only) | Faithfulness | Gecikme |
 |---|---|---|---|---|
-| **Adaptif** (L1 bölgesi) | 0.55 | 0.75 | **~1 ms** | %100 |
-| Embedding-only | 0.43 | 0.59 | 369 ms | %100 |
-| RAG-only | **0.75** | 0.75 | 1862 ms | %100 |
+| **Adaptif** (L1 bölgesi) | 0.73 | **0.97** | 1.00 | **~1 ms** |
+| Embedding-only | 0.62 | 0.83 | 0.91 | 490 ms |
+| RAG-only | **0.75** | **1.00** | 1.00 | 1965 ms |
 
-Küçük corpus'ta BM25, embedding-only baseline'dan **daha alakalı** sonucu **sıfır LLM maliyetiyle** verir; adaptif tasarım LLM maliyetini corpus bunu hak edene kadar erteler.
+Küçük corpus'ta BM25, embedding-only baseline'dan **daha alakalı** sonucu **sıfır LLM maliyetiyle** verir; belge corpus'ta mevcutken adaptif katman Full RAG kalitesinin %97'sine ~2000 kat düşük gecikmeyle ulaşır. Adaptif tasarım LLM maliyetini corpus bunu hak edene kadar erteler. (Answer gating'in etkisi: gating öncesi adaptif relevancy 0.55 idi — alakasız top-K snippet'leri cevaba karışıyordu.)
 
 **Eşik sensitivity:** L1 relevancy corpus büyüdükçe düşer (0.77 → 0.50), L2 sabit ~0.55 kalır; **kesişim ~50 belgede** gerçekleşir → `Layer2Threshold = 50` ampirik gerekçeli. L3 her boyutta 1.00 relevancy ile kalite tavanıdır; geçişin 200'e ertelenmesi kalite değil **maliyet-fayda** kararıdır.
 

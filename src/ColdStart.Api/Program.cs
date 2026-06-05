@@ -17,7 +17,8 @@ builder.Services
     .AddEmbeddingSearch(builder.Configuration)
     .AddVectorRag(builder.Configuration)
     .AddApiPresentation()
-    .AddDocumentSeed();
+    .AddDocumentSeed()
+    .AddExperimentResults();
 
 var app = builder.Build();
 
